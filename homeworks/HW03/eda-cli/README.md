@@ -57,3 +57,30 @@ uv run eda-cli report data/example.csv --out-dir reports
 ```bash
 uv run pytest -q
 ```
+
+## Доступные команды
+
+- `overview` — краткий обзор датасета (количество строк/столбцов, типы данных)
+- `report` — генерация полного EDA-отчета
+
+## Параметры команды report
+
+- `--out-dir TEXT` — каталог для сохранения отчета [default: reports]
+- `--sep TEXT` — разделитель в CSV [default: ,]
+- `--encoding TEXT` — кодировка файла [default: utf-8]
+- `--max-hist-columns INTEGER` — максимальное количество числовых колонок для гистограмм [default: 6]
+- `--min-missing-share FLOAT` — порог доли пропусков для определения "проблемных" колонок [default: 0.5]
+
+## Примеры использования
+
+Базовый отчет
+
+```bash
+uv run eda-cli report data/example.csv --out-dir reports_example
+```
+
+Отчет с настройками
+
+```bash
+uv run eda-cli report data/example.csv --out-dir reports_custom --max-hist-columns 3 --min-missing-share 0.3 --top-k-categories 3
+```

@@ -8,3 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Temporary directories
+.pytest_cache/
+reports/
+reports_example/
