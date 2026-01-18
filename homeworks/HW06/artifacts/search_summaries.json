@@ -1,0 +1,17 @@
+{
+    "DecisionTreeClassifier": {
+        "best_params": {
+            "max_depth": 10,
+            "min_samples_leaf": 20
+        },
+        "best_score": 0.8324994917183745
+    },
+    "RandomForestClassifier": {
+        "best_params": {
+            "max_depth": null,
+            "max_features": "log2",
+            "min_samples_leaf": 1
+        },
+        "best_score": 0.9265961282754057
+    }
+}
