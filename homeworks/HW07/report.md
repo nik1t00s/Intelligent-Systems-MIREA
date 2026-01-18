@@ -48,13 +48,13 @@
 
 - Датасет 01:
   - KMeans: поиск `k=2…20`, `random_state=666`, `n_init=10`
-  - DBSCAN: поиск `eps=0.1…0.6`, `min_samples=5`, оценка доли шума
+  - DBSCAN: поиск `eps=0.1…0.5`, `min_samples=5`, оценка доли шума
 - Датасет 02:
   - KMeans: поиск `k=2…20`, `random_state=666`, `n_init=10`
-  - DBSCAN: поиск `eps=0.1…0.6`, `min_samples=5`, оценка доли шума
+  - DBSCAN: поиск `eps=0.1…0.5`, `min_samples=5`, оценка доли шума
 - Датасет 03:
   - KMeans: поиск `k=2…20`, `random_state=666`, `n_init=10`
-  - DBSCAN: поиск `eps=0.1…0.6`, `min_samples=5`, оценка доли шума
+  - DBSCAN: поиск `eps=0.1…0.5`, `min_samples=5`, оценка доли шума
 
 ## 4. Results
 
