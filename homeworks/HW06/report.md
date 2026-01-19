@@ -19,8 +19,8 @@
 ## 3. Models
 
 - DummyClassifier: стратегия `most_frequent`
-- LogisticRegression: Pipeline(StandardScaler + LogisticRegression)
-- DecisionTreeClassifier: подбор `max_depth` и `min_samples_leaf`
+- LogisticRegression: Pipeline(StandardScaler + LogisticRegression(max_iter=1000, random_state=666))
+- DecisionTreeClassifier: подбор `max_depth` [3,5,7,10, None] и `min_samples_leaf` [1,5,10,20]. Без контроля сложности дерево может достичь глубины >50 и идеально переобучиться на трейне. 
 - RandomForestClassifier: подбор `max_depth`, `min_samples_leaf`, `max_features`
 - GradientBoostingClassifier: подбор `n_estimators`, `learning_rate`, `max_depth`, `min_samples_leaf`
 - StackingClassifier: базовые модели RandomForest и GradientBoosting, метамодель — LogisticRegression, обучение через CV-логику
@@ -39,6 +39,8 @@
 | StackingClassifier          | 0.9082    | 0.8106  | 0.9259   |
 
 - Победитель: StackingClassifier — лучшая модель по accuracy, F1 и ROC-AUC, что подтверждает эффективность объединения ансамблей.
+- DecisionTreeClassifier: accuracy=0.8351, F1=0.648, ROC-AUC=0.8377. Лучшие параметры: max_depth=10, min_samples_leaf=20
+- Для сравнения: DecisionTreeClassifier без контроля сложности (max_depth=None, min_samples_leaf=1) показал accuracy=0.98 на train, но 0.79 на test - явное переобучение. Контроль сложности улучшил обобщающую способность на 5.5 процентов по accuracy на тесте
 
 ## 5. Analysis
 
@@ -46,6 +48,7 @@
 - Ошибки: матрица ошибок для StackingClassifier — TN:3202, FP:116, FN:298, TP: 884.
 Модель хорошо различает классы, большинство ошибок приходится на меньший класс (target=1).
 - Интерпретация: permutation importance (Top-10 признаков) для StackingClassifier — Наибольшее влияние оказывают признаки `f16` (0.07) и `f01` (0.034). Остальные признаки из топ-10 (`f08`, `f23`, `f07`, `f30`, `f12`, `f15`, `f13`, `f05`) имеют умеренное влияние (0.01–0.02). Модель в основном ориентируется на эти ключевые признаки, что соответствует ожидаемому распределению важности по данным.
+- Для DecisionTreeClassifier был проведен анализ переобучения. Без контроля сложности: train accuracy=0.98, test accuracy=0.79. С контролем сложности (max_depth=10,min_samples_leaf=20): train accuracy=0.85, test accuracy=0.8351. Разрыв между train/test уменьшился с 19 процентов до 1.5 процента, что подтверждает эффективность контроля сложности
 
 ## 6. Conclusion
 
