@@ -1,0 +1,17 @@
+{
+    "experiment_id": "E4",
+    "dataset": "CIFAR10",
+    "seed": 42,
+    "input_size": 3072,
+    "hidden_sizes": [
+        256,
+        128
+    ],
+    "num_classes": 10,
+    "dropout": 0.0,
+    "use_batchnorm": true,
+    "optimizer": "Adam",
+    "learning_rate": 0.001,
+    "batch_size": 64,
+    "early_stopping_patience": 3
+}
