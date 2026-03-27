@@ -1,0 +1,9 @@
+{
+    "dataset": "STL10",
+    "experiment": "C4",
+    "num_classes": 10,
+    "batch_size": 64,
+    "epochs": 20,
+    "seed": 42,
+    "test_accuracy": 95.425
+}
