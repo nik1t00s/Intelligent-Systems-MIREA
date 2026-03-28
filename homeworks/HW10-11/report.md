@@ -2,9 +2,10 @@
 
 ## 1. Кратко: что сделано
 
-- Выбран датасет STL10. Рекомендуемый по умолчанию, содержит достаточно 10 классов и 96x96 изображений, что абсолютно достаточно.
-- Выбран трек detection с датасетом "Pascal VOC 2012". Detection выбран как более универсальный вариант для работы с готовыми CV пайплайнами.
-- Часть A: 4 эксперимента (с C1 до C4) - простая CNN, CNN с аугментациями, ResNet18 head-only, ResNet18 fine-tune. Часть B: 2 режима инференса (V1-V2) с разными score_threshold (0.3, 0.7)
+- Выбран датасет **STL10**. Рекомендуемый по умолчанию, содержит достаточно 10 классов и изображения 96x96 пикселей, что абсолютно достаточно.
+- Выбран трек **detection** с датасетом **Pascal VOC 2012**. **Detection** выбран как более универсальный вариант для работы с готовыми CV пайплайнами (в отличие от segmentation).
+- Часть A: 4 эксперимента (с C1 до C4) - простая CNN, CNN с аугментациями, ResNet18 head-only, ResNet18 fine-tune.
+- Часть B (**detection**): 2 режима инференса (V1-V2) с разными score_threshold (0.3, 0.7)
 
 ## 2. Среда и воспроизводимость
 
@@ -18,19 +19,19 @@
 
 ### 3.1. Часть A: классификация
 
-- Датасет: `STL10`
+- Датасет: **STL10**
 - Разделение: train/val/test (80/20 split для train/val, отдельный test)
-- Базовые transforms: Resize, ToTensor, Normalize
-- Augmentation transforms: RandomHorizontalFlip, RandomRotation, ColorJitter, ToTensor, Normalize
+- Базовые transforms: Resize(96x96), ToTensor, Normalize(mean=0.5, std=0.5)
+- Augmentation transforms: Resize(96x96), RandomHorizontalFlip(p=0.5), RandomRotation(10), ColorJitter(brightness=0.2, contrast=0.2), ToTensor, Normalize(mean=0.5, std=0.5)
 - Комментарий (2-4 предложения): STL10 содержит 10 классов природных объектов (airplane, bird, car, cat, deer, dog, horse, monkey, ship, truck). Изображения 96x96 пикселей, что требует больше вычислительных ресурсов чем CIFAR10, но и задача получается сложнее. 13000 изображений в train, 8000 в test.
 
 ### 3.2. Часть B: structured vision
 
-- Датасет: `Pascal VOC`
-- Трек: `detection`
+- Датасет: **Pascal VOC**
+- Трек: **detection** (выбран **detection**, НЕ **segmentation**)
 - Что считается ground truth: Bounding boxes из VOC аннотаций (20 классов объектов)
-- Какие предсказания использовались: Bounding boxes от FasterRCNN_ResNet50_FPN с разными порогами
-- Комментарий (2-4 предложения): Pascal VOC — это стандартный бенчмарк для detection. 20 классов объектов позволяют продемонстрировать работу multi-class detection. Pretrained модель на COCO позволяет без дообучения получить хорошие результаты.
+- Какие предсказания использовались: Bounding boxes от FasterRCNN_ResNet50_FPN с разными порогами уверенности (score_threshold)
+- Комментарий (2-4 предложения): **Pascal VOC** — это стандартный бенчмарк для **detection**. 20 классов объектов позволяют продемонстрировать работу multi-class **detection**. Pretrained модель на COCO позволяет без дообучения получить хорошие результаты.
 
 ## 4. Часть A: модели и обучение (C1-C4)
 
@@ -38,8 +39,8 @@
 
 - C1 (simple-cnn-base): Простая CNN (3 conv слоя + FC), без аугментаций
 - C2 (simple-cnn-aug): Простая CNN (3 conv слоя + FC), с аугментациями (flip, rotation, color jitter)
-- C3 (resnet18-head-only): Pretrained ResNet18, заморожен backbone, обучается только FC
-- C4 (resnet18-finetune): Pretrained ResNet18, разморожен layer4 + FC
+- C3 (resnet18-head-only): Pretrained ResNet18 (ResNet18_Weights.DEFAULT), заморожен backbone, обучается только FC
+- C4 (resnet18-finetune): Pretrained ResNet18 (ResNet18_Weights.DEFAULT), разморожен layer4 + FC
 
 Дополнительно:
 
@@ -59,15 +60,6 @@
 - Как считался IoU: Стандартный IoU = intersection / union для bounding boxes.
 - Как считались precision / recall: TP: prediction с IoU >= 0.5 к ground truth. FP: prediction без matching ground truth. FN: ground truth без matching prediction. Precision = TP / (TP + FP), Recall = TP / (TP + FN).
 
-### Если выбран segmentation track
-
-- Модель: 
-- Что считается foreground:
-- V1: базовая постобработка
-- V2: альтернативная постобработка
-- Как считался mean IoU:
-- Считались ли дополнительные pixel-level метрики:
-
 ## 6. Результаты
 
 Ссылки на файлы в репозитории:
@@ -82,7 +74,7 @@
 
 Короткая сводка (6-10 строк):
 
-- Лучший эксперимент части A: C4 (ResNet18 fine-tune)ы
+- Лучший эксперимент части A: C4 (ResNet18 fine-tune)
 - Лучшая `val_accuracy`: 96.10%
 - Итоговая `test_accuracy` лучшего классификатора: 95.42%
 - Что дали аугментации (C2 vs C1): +5.90%
@@ -102,8 +94,8 @@
 - Аугментации дали устойчивое улучшение (+5.90%), что подтверждает их эффективность для предотвращения overfitting. Особенно заметен рост на validation set, что указывает на лучшую генерализацию.
 - Pretrained ResNet18 показал значительное преимущество (+34.30% vs C1), что демонстрирует силу transfer learning. Pretrained веса на ImageNet содержат полезные признаки для классификации изображений.
 - Fine-tuning layer4 дал дополнительное улучшение (+1.40%), что показывает полезность дообучения последних слоёв backbone для адаптации к целевому датасету.
-- Detection метрики показывают классический tradeoff: V1 (низкий порог) даёт высокий recall (1.0) но низкий precision (0.274) — модель детектирует всё, но много false positives. V2 (высокий порог) даёт баланс — precision растёт до 0.5, recall падает до 0.706, но IoU растёт (0.817) — оставшиеся детекции качественнее.
-- V1 (низкий порог) даёт высокий recall (1.0) но низкий precision (0.274) — модель детектирует всё, но много false positives. V2 (высокий порог) даёт баланс — precision растёт до 0.5, recall падает до 0.706, но IoU растёт (0.817)
+- **Detection** метрики показывают классический tradeoff: V1 (низкий порог) даёт высокий recall (1.0) но низкий precision (0.274) — модель детектирует всё, но много false positives. V2 (высокий порог) даёт баланс — precision растёт до 0.5, recall падает до 0.706, но IoU растёт (0.817) — оставшиеся детекции качественнее.
+- V1 (низкий порог) даёт высокий recall (1.0) но низкий precision (0.274) — модель детектирует всё, но много false positives. V2 (высокий порог) даёт баланс — precision растёт до 0.5, recall падает до 0.706, но IoU растёт (0.817) — оставшиеся детекции качественнее.
 - На низком пороге (V1) модель детектирует много объектов с низкой уверенностью, что увеличивает false positives. На высоком пороге (V2) некоторые объекты пропускаются, но качество детекций выше.
 
 ## 8. Итоговый вывод
@@ -112,7 +104,7 @@
 
 - Выбрал бы C4 (ResNet18 fine-tune) как базовый, так как он даёт наилучший баланс accuracy и вычислительной эффективности.
 - Pretrained веса на больших датасетах (ImageNet) содержат универсальные признаки, которые эффективно переносятся на другие задачи. Fine-tuning последних слоёв позволяет адаптировать модель к целевому домену.
-- Precision/recall tradeoff — фундаментальное свойство detection. Выбор порога зависит от задачи: высокий recall для safety-critical приложений, высокий precision для минимизации false alarms. IoU показывает качество локализации bounding boxes.
+- Precision/recall tradeoff — фундаментальное свойство **detection**. Выбор порога зависит от задачи: высокий recall для safety-critical приложений, высокий precision для минимизации false alarms. IoU показывает качество локализации bounding boxes.
 
 ## 9. Приложение (опционально)
 

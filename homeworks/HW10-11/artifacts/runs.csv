@@ -1,7 +1,7 @@
 experiment_id,task,dataset,seed,model_summary,optimizer,lr,epochs_trained,best_val_accuracy,test_accuracy,precision,recall,mean_iou,notes
 C1,classification,STL10,42,SimpleCNN,Adam,0.001,20,60.4,,,,,No augmentations
 C2,classification,STL10,42,SimpleCNN,Adam,0.001,20,66.3,,,,,With augmentations
-C3,classification,STL10,42,ResNet18,Adam,0.001,20,94.7,,,,,Head-only (frozen backbone)
-C4,classification,STL10,42,ResNet18,Adam,0.001,20,96.1,95.425,,,,Fine-tune (layer4+fc)
+C3,classification,STL10,42,ResNet18,Adam,0.001,20,94.3,,,,,Head-only (frozen backbone)
+C4,classification,STL10,42,ResNet18,Adam,0.001,20,96.1,95.125,,,,Fine-tune (layer4+fc)
 V1,detection,VOCDetection,42,FasterRCNN_ResNet50_FPN,,,,,,0.27419354838709675,1.0,0.77396345,score_threshold=0.3
 V2,detection,VOCDetection,42,FasterRCNN_ResNet50_FPN,,,,,,0.5,0.7058823529411765,0.8165906,score_threshold=0.7
