@@ -68,4 +68,10 @@ __pycache__/
 
 # Если датасет большой
 S12-hw-dataset.csv
+
+artifacts/model_output/
+*.pt
+*.pth
+*.bin
+checkpoint-*/
  
