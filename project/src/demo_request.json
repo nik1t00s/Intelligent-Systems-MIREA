@@ -1,0 +1,42 @@
+{
+  "tasks": [
+    {
+      "priority": "critical",
+      "assignee_experience": 1.4,
+      "estimated_hours": 42.0,
+      "actual_progress": 28.0,
+      "days_since_created": 19,
+      "comments_count": 11,
+      "status": "blocked",
+      "team_size": 5,
+      "task_type": "bug",
+      "has_blockers": true,
+      "blockers_count": 2,
+      "recent_reassignments": 2,
+      "sprint_phase": "release_week",
+      "priority_score": 4,
+      "workload_ratio": 3.1,
+      "is_customer_facing": true,
+      "requires_review": true
+    },
+    {
+      "priority": "medium",
+      "assignee_experience": 5.8,
+      "estimated_hours": 10.0,
+      "actual_progress": 82.0,
+      "days_since_created": 6,
+      "comments_count": 2,
+      "status": "review",
+      "team_size": 6,
+      "task_type": "documentation",
+      "has_blockers": false,
+      "blockers_count": 0,
+      "recent_reassignments": 0,
+      "sprint_phase": "mid_sprint",
+      "priority_score": 2,
+      "workload_ratio": 1.0,
+      "is_customer_facing": false,
+      "requires_review": true
+    }
+  ]
+}

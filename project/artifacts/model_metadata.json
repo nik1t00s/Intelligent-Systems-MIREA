@@ -1,0 +1,61 @@
+{
+  "project_name": "task-overdue-risk",
+  "dataset_path": "data\\tasks_synthetic.csv",
+  "rows": 5000,
+  "feature_columns": [
+    "assignee_experience",
+    "estimated_hours",
+    "actual_progress",
+    "days_since_created",
+    "comments_count",
+    "team_size",
+    "blockers_count",
+    "recent_reassignments",
+    "priority_score",
+    "workload_ratio",
+    "priority",
+    "status",
+    "task_type",
+    "sprint_phase",
+    "has_blockers",
+    "is_customer_facing",
+    "requires_review"
+  ],
+  "id_column": "task_id",
+  "target_column": "is_overdue",
+  "leaderboard": {
+    "logistic_regression": {
+      "accuracy": 0.67,
+      "precision": 0.4637,
+      "recall": 0.6622,
+      "f1": 0.5455,
+      "roc_auc": 0.727
+    },
+    "random_forest": {
+      "accuracy": 0.719,
+      "precision": 0.5421,
+      "recall": 0.388,
+      "f1": 0.4522,
+      "roc_auc": 0.6986
+    },
+    "gradient_boosting": {
+      "accuracy": 0.732,
+      "precision": 0.6148,
+      "recall": 0.2776,
+      "f1": 0.3825,
+      "roc_auc": 0.6946
+    }
+  },
+  "best_model_name": "logistic_regression",
+  "best_metrics": {
+    "accuracy": 0.67,
+    "precision": 0.4637,
+    "recall": 0.6622,
+    "f1": 0.5455,
+    "roc_auc": 0.727
+  },
+  "class_balance": {
+    "0": 0.7012,
+    "1": 0.2988
+  }
+}
