@@ -94,3 +94,5 @@ build_final_report_utf8.py
 template_pdf_extracted.txt
 ~$*.docx
 project/notebooks/01_jira_eda_and_experiments.ipynb
+Шаблон отчета.docx
+Шаблон отчета.pdf
