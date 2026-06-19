@@ -1,4 +1,4 @@
-# ---------------------------------------------------------
+﻿# ---------------------------------------------------------
 # Общие правила игнорирования для репозитория студента
 # ---------------------------------------------------------
 
@@ -57,6 +57,10 @@ logs/
 *.old
 homeworks/HW08-09/data/ 
 data/
+project/data/*
+!project/data/
+!project/data/README.md
+!project/data/demo_sample.csv
 *.tar.gz
 *.tar
 *.zip
@@ -74,4 +78,19 @@ artifacts/model_output/
 *.pth
 *.bin
 checkpoint-*/
- 
+
+# Local course materials and generated report drafts that should not be uploaded
+DPO AI/
+report_assets/
+report_assets_jira/
+report_assets_v2/
+final_project_report_jira_*.docx
+final_project_report_jira_*.pdf
+DOCX_MANUAL_CLEANUP_REVIEW.md
+DOCX_SECOND_REVIEW_AND_CITATIONS.md
+REPORT_FILLING_GUIDE.md
+REPORT_TEXT_EXPANSION_BRIEF.md
+build_final_report_utf8.py
+template_pdf_extracted.txt
+~$*.docx
+project/notebooks/01_jira_eda_and_experiments.ipynb

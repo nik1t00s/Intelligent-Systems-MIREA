@@ -1,52 +1,154 @@
-﻿# Система управления задачами с прогнозированием просрочки
+# Jira Issue Delay Risk Service
 
-End-to-end учебный проект по курсу «Инженерия искусственного интеллекта».  
-Предметная область: управление задачами в небольшой команде.  
-ML-задача: бинарная классификация `is_overdue` — предсказать, будет ли задача просрочена.
+Итоговый проект по программе ДПО «Инженерия искусственного интеллекта».
 
-## Что внутри
+Сервис прогнозирует риск долгого закрытия Jira issue по признакам, доступным на этапе triage. Проект закрывает полный минимальный ML lifecycle: данные -> EDA -> предобработка -> baseline/improved models -> сохраненная модель -> FastAPI API -> Docker -> тесты -> артефакты для отчета.
 
-- Реалистичный синтетический датасет задач в [data/tasks_synthetic.csv](/n:/AI/Intelligent-Systems-MIREA/project/data/tasks_synthetic.csv)
-- Обучение и сравнение `LogisticRegression`, `RandomForest` и `GradientBoosting`
-- Сохранённая обученная модель в [artifacts/model.joblib](/n:/AI/Intelligent-Systems-MIREA/project/artifacts/model.joblib)
-- FastAPI-сервис с `/health`, `/predict`, `/metrics`
-- Базовая наблюдаемость: логи, счётчики запросов, latency, health-check
-- Конфиги и переменные окружения через [configs/train_config.yaml](/n:/AI/Intelligent-Systems-MIREA/project/configs/train_config.yaml) и [.env.example](/n:/AI/Intelligent-Systems-MIREA/project/.env.example)
-- Docker-упаковка и минимальные smoke-тесты
+## ML-задача
+
+- Тип задачи: бинарная классификация.
+- Входные данные: `issue_type`, `priority`, `has_priority`, `component_present`, `summary_length`, `summary_word_count`, `description_length`, `description_word_count`.
+- Целевая переменная: `is_delayed`.
+- Логика цели: `is_delayed = 1`, если `resolution_time_days = Resolved - Created` выше 75-го процентиля.
+- Текущий порог: `305.2056` дня.
+- Основные метрики: `F1`, `Recall`, `ROC-AUC`.
+- Почему эти метрики: для раннего выявления рискованных issues важно не пропускать долгие задачи, поэтому кроме общего качества учитываются `Recall` и баланс `Precision/Recall` через `F1`.
 
 ## Структура
 
-- [src](/n:/AI/Intelligent-Systems-MIREA/project/src) — генерация данных, обучение, API-сервис
-- [data](/n:/AI/Intelligent-Systems-MIREA/project/data) — синтетический датасет
-- [artifacts](/n:/AI/Intelligent-Systems-MIREA/project/artifacts) — модель и метаданные экспериментов
-- [notebooks](/n:/AI/Intelligent-Systems-MIREA/project/notebooks) — EDA и эксперименты
-- [tests](/n:/AI/Intelligent-Systems-MIREA/project/tests) — проверки API
-- [report.md](/n:/AI/Intelligent-Systems-MIREA/project/report.md) — краткий отчёт
-- [self-checklist.md](/n:/AI/Intelligent-Systems-MIREA/project/self-checklist.md) — самопроверка
+```text
+project/
+├── data/
+│   └── README.md
+├── notebooks/
+│   ├── 01_eda.ipynb
+│   └── 02_modeling.ipynb
+├── src/
+│   ├── __init__.py
+│   ├── config.py
+│   ├── preprocessing.py
+│   ├── train.py
+│   ├── predict.py
+│   └── service.py
+├── models/
+│   ├── model.joblib
+│   └── model_metadata.json
+├── configs/
+│   └── config.yaml
+├── tests/
+│   └── test_service.py
+├── screenshots/
+│   └── swagger_ui.png
+├── .env.example
+├── .gitignore
+├── Dockerfile
+├── requirements.txt
+└── README.md
+```
 
-## Запуск локально
+## Данные
+
+Источник: Kaggle Jira Dataset.
+
+```text
+https://www.kaggle.com/datasets/cesaranasco/jira-dataset
+```
+
+Ожидаемый локальный путь:
+
+```text
+data/jira_dataset.csv
+```
+
+Инструкция по получению данных лежит в `data/README.md`. CSV не коммитится: правило добавлено в `.gitignore`.
+
+## EDA
+
+Открыть notebook:
+
+```text
+notebooks/01_eda.ipynb
+```
+
+В нем есть загрузка данных, описание структуры, проверка пропусков, типы признаков, базовая статистика, анализ целевой переменной, графики и выводы по дисбалансу, пропускам, выбросам и особенностям признаков.
+
+## Обучение
 
 ```bash
 cd project
-python -m venv .venv
-.venv\Scripts\activate
-pip install --upgrade pip
 pip install -r requirements.txt
 python -m src.train
+```
+
+Скрипт:
+
+- читает `data/jira_dataset.csv`;
+- готовит `artifacts/jira_issues_prepared.csv`;
+- строит единый sklearn pipeline с предобработкой из `src/preprocessing.py`;
+- сравнивает baseline и улучшенные модели;
+- сохраняет финальную модель в `models/model.joblib`;
+- сохраняет метаданные в `models/model_metadata.json`.
+
+## Modeling notebook
+
+```text
+notebooks/02_modeling.ipynb
+```
+
+Ноутбук загружает реальные метрики из `artifacts/leaderboard.json`, формирует таблицу сравнения моделей и строит график для отчета.
+
+## Модели и метрики
+
+| Модель | Описание | Accuracy | Precision | Recall | F1 | ROC-AUC | Комментарий |
+|---|---|---:|---:|---:|---:|---:|---|
+| LogisticRegression | Baseline, линейная модель | 0.5083 | 0.3112 | 0.8068 | 0.4491 | 0.6436 | Для сравнения |
+| RandomForest | Improved, ансамбль деревьев | 0.6933 | 0.4465 | 0.9781 | 0.6131 | 0.9198 | Финальная модель |
+| GradientBoosting | Improved, boosting деревьев | 0.7972 | 0.9364 | 0.1968 | 0.3253 | 0.8960 | Высокий precision, низкий recall |
+
+Финальная модель: `RandomForest`. Она выбрана по лучшему `F1`, высокому `Recall` и высокому `ROC-AUC`.
+
+## Локальный запуск API
+
+```bash
+cd project
+pip install -r requirements.txt
 uvicorn src.service:app --host 0.0.0.0 --port 8000
 ```
 
-Сервис будет доступен на `http://localhost:8000`.
+Альтернативно:
 
-## Эндпоинты
+```bash
+python -m src.service
+```
 
-- `GET /health` — статус сервиса и имя загруженной модели
-- `POST /predict` — прогноз риска просрочки по списку задач
-- `GET /metrics` — базовые текстовые метрики в стиле Prometheus
+Swagger UI:
 
-## Пример запроса к API
+```text
+http://localhost:8000/docs
+```
 
-Файл с примером тела запроса: [src/demo_request.json](/n:/AI/Intelligent-Systems-MIREA/project/src/demo_request.json)
+## API
+
+Health-check:
+
+```bash
+curl http://localhost:8000/health
+```
+
+Пример ответа:
+
+```json
+{
+  "status": "ok",
+  "environment": "development",
+  "model_loaded": true,
+  "model_name": "random_forest",
+  "model_version": "v1",
+  "dataset": "data/jira_dataset.csv"
+}
+```
+
+Predict:
 
 ```bash
 curl -X POST "http://localhost:8000/predict" ^
@@ -54,49 +156,64 @@ curl -X POST "http://localhost:8000/predict" ^
   --data @src/demo_request.json
 ```
 
-Пример ответа:
+Пример тела запроса:
 
 ```json
 {
-  "model_name": "logistic_regression",
-  "predictions": [
+  "issues": [
     {
-      "is_overdue": 1,
-      "overdue_probability": 0.9425,
-      "overdue_risk": "high"
-    },
-    {
-      "is_overdue": 0,
-      "overdue_probability": 0.0853,
-      "overdue_risk": "low"
+      "issue_type": "Bug",
+      "priority": "High",
+      "has_priority": true,
+      "component_present": true,
+      "summary_length": 92,
+      "summary_word_count": 12,
+      "description_length": 1840,
+      "description_word_count": 245
     }
   ]
 }
 ```
 
-## Обучение модели
+Пример ответа:
+
+```json
+{
+  "model_name": "random_forest",
+  "model_version": "v1",
+  "predictions": [
+    {
+      "prediction": 0,
+      "probability": 0.1699,
+      "is_delayed": 0,
+      "delay_probability": 0.1699,
+      "delay_risk": "low"
+    }
+  ]
+}
+```
+
+## Docker
 
 ```bash
 cd project
-python -m src.train
+docker build -t aie-project .
+docker run -p 8000:8000 aie-project
 ```
 
-Скрипт:
+Или через compose:
 
-- генерирует синтетический датасет на 5000 задач;
-- делит выборку на `train/test = 80/20`;
-- обучает три модели;
-- сохраняет финальную модель и таблицу метрик в `artifacts/`.
+```bash
+docker compose up --build
+```
 
-Фактические метрики на тестовой выборке:
+Контейнер запускает FastAPI на порту `8000`.
 
-| Model | Accuracy | Precision | Recall | F1 | ROC-AUC |
-|---|---:|---:|---:|---:|---:|
-| LogisticRegression | 0.6700 | 0.4637 | 0.6622 | 0.5455 | 0.7270 |
-| RandomForest | 0.7190 | 0.5421 | 0.3880 | 0.4522 | 0.6986 |
-| GradientBoosting | 0.7320 | 0.6148 | 0.2776 | 0.3825 | 0.6946 |
+## Swagger UI screenshot
 
-Финальная модель: `LogisticRegression`, потому что при умеренно несбалансированных классах она лучше удерживает `recall` и даёт лучший `F1`, что важнее для раннего обнаружения потенциально просроченных задач.
+- URL: `http://localhost:8000/docs`
+- Скриншот: `screenshots/swagger_ui.png`
+- Инструкция по обновлению: `screenshots/README.md`
 
 ## Тесты
 
@@ -107,37 +224,48 @@ python -m unittest tests/test_service.py
 
 Тесты проверяют:
 
-- запуск API и `/health`;
-- рабочий сценарий `/predict`;
-- валидацию входных данных.
+- `GET /health`;
+- успешный `POST /predict`;
+- ошибку валидации для невалидного запроса.
 
-## Docker
+## Конфигурация и безопасность
 
-```bash
-cd project
-docker build -t task-overdue-service .
-docker run -p 8000:8000 task-overdue-service
-```
-
-Или:
-
-```bash
-cd project
-docker compose up --build
-```
+- Основной конфиг: `configs/config.yaml`.
+- Пример окружения: `.env.example`.
+- Реальный `.env` не коммитится.
+- Секретов, токенов и паролей в проекте нет.
+- В логах фиксируются запуск сервиса, загрузка модели, запросы, ошибки валидации и latency, без секретов и персональных данных.
 
 ## Сценарий демонстрации
 
-1. Показать структуру проекта и артефакты в `data/`, `artifacts/`, `notebooks/`, `src/`.
-2. Открыть [notebooks/01_eda_and_experiments.ipynb](/n:/AI/Intelligent-Systems-MIREA/project/notebooks/01_eda_and_experiments.ipynb) и показать EDA с таблицей сравнения моделей.
-3. Запустить сервис командой `uvicorn src.service:app --host 0.0.0.0 --port 8000`.
-4. Проверить `GET /health`.
-5. Отправить `POST /predict` с примером из `src/demo_request.json`.
-6. Показать `GET /metrics` и объяснить, какие счётчики обновились.
+1. Показать `data/README.md` и локальный `data/jira_dataset.csv`.
+2. Открыть `notebooks/01_eda.ipynb`: EDA, пропуски, типы, статистика, целевая переменная, графики.
+3. Открыть `notebooks/02_modeling.ipynb`: таблица сравнения моделей.
+4. Запустить `python -m src.train` или показать уже сохраненную `models/model.joblib`.
+5. Запустить API через `uvicorn src.service:app --host 0.0.0.0 --port 8000`.
+6. Открыть `http://localhost:8000/docs` и показать `/health`, `/predict`.
+7. Выполнить `curl http://localhost:8000/health`.
+8. Выполнить `/predict` с `src/demo_request.json`.
+9. Показать `screenshots/swagger_ui.png` и `tests/test_service.py`.
 
-## Ограничения
+## Чек-лист
 
-- Датасет синтетический, поэтому метрики отражают качество на искусственно сгенерированном процессе.
-- В сервисе нет аутентификации и внешнего хранилища.
-- Мониторинг реализован в минимальном учебном объёме.
-
+| Пункт | Статус | Где смотреть |
+|---|---|---|
+| Сервис запускается | Да | `src/service.py`, раздел «Локальный запуск API» |
+| `/predict` использует реальную модель | Да | `src/service.py`, `models/model.joblib` |
+| Есть EDA | Да | `notebooks/01_eda.ipynb` |
+| Есть baseline и improved models | Да | `src/train.py`, `notebooks/02_modeling.ipynb` |
+| Есть реальные метрики | Да | `artifacts/leaderboard.json`, таблица в README |
+| Код структурирован в `src/` | Да | `src/` |
+| Предобработка вынесена в код | Да | `src/preprocessing.py` |
+| Есть Dockerfile | Да | `Dockerfile` |
+| Есть `.env.example` | Да | `.env.example` |
+| Секреты не коммитятся | Да | `.gitignore`, раздел «Конфигурация и безопасность» |
+| Есть `/health` | Да | `src/service.py` |
+| Есть логи | Да | `src/service.py` |
+| Обоснован выбор модели | Да | раздел «Модели и метрики» |
+| Есть Swagger screenshot | Да | `screenshots/swagger_ui.png` |
+| Есть сохраненная модель | Да | `models/model.joblib` |
+| Есть curl для `/predict` | Да | раздел «API» |
+| Есть тесты | Да | `tests/test_service.py` |

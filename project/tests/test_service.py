@@ -10,8 +10,8 @@ from src.config import PROJECT_ROOT
 class ServiceSmokeTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        model_path = PROJECT_ROOT / "artifacts" / "model.joblib"
-        metadata_path = PROJECT_ROOT / "artifacts" / "model_metadata.json"
+        model_path = PROJECT_ROOT / "models" / "model.joblib"
+        metadata_path = PROJECT_ROOT / "models" / "model_metadata.json"
         if not model_path.exists() or not metadata_path.exists():
             raise unittest.SkipTest("Model artifacts are missing. Run `python -m src.train` before tests.")
 
@@ -29,59 +29,44 @@ class ServiceSmokeTests(unittest.TestCase):
         response = self.client.get("/health")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["status"], "ok")
+        self.assertTrue(response.json()["model_loaded"])
 
     def test_predict_endpoint(self) -> None:
         payload = {
-            "tasks": [
+            "issues": [
                 {
-                    "priority": "high",
-                    "assignee_experience": 2.0,
-                    "estimated_hours": 32.0,
-                    "actual_progress": 30.0,
-                    "days_since_created": 17,
-                    "comments_count": 7,
-                    "status": "blocked",
-                    "team_size": 4,
-                    "task_type": "bug",
-                    "has_blockers": True,
-                    "blockers_count": 2,
-                    "recent_reassignments": 1,
-                    "sprint_phase": "release_week",
-                    "priority_score": 3,
-                    "workload_ratio": 2.8,
-                    "is_customer_facing": True,
-                    "requires_review": True
+                    "issue_type": "Bug",
+                    "priority": "High",
+                    "has_priority": True,
+                    "component_present": True,
+                    "summary_length": 92,
+                    "summary_word_count": 12,
+                    "description_length": 1840,
+                    "description_word_count": 245
                 }
             ]
         }
         response = self.client.post("/predict", json=payload)
         self.assertEqual(response.status_code, 200)
         body = response.json()
-        self.assertEqual(body["model_name"], "logistic_regression")
+        self.assertEqual(body["model_version"], "v1")
         self.assertEqual(len(body["predictions"]), 1)
-        self.assertIn("overdue_probability", body["predictions"][0])
+        self.assertIn("prediction", body["predictions"][0])
+        self.assertIn("probability", body["predictions"][0])
+        self.assertIn("delay_probability", body["predictions"][0])
 
-    def test_invalid_priority_score_is_rejected(self) -> None:
+    def test_invalid_summary_length_is_rejected(self) -> None:
         payload = {
-            "tasks": [
+            "issues": [
                 {
-                    "priority": "low",
-                    "assignee_experience": 5.0,
-                    "estimated_hours": 8.0,
-                    "actual_progress": 90.0,
-                    "days_since_created": 3,
-                    "comments_count": 1,
-                    "status": "done",
-                    "team_size": 4,
-                    "task_type": "documentation",
-                    "has_blockers": False,
-                    "blockers_count": 0,
-                    "recent_reassignments": 0,
-                    "sprint_phase": "mid_sprint",
-                    "priority_score": 3,
-                    "workload_ratio": 0.5,
-                    "is_customer_facing": False,
-                    "requires_review": False
+                    "issue_type": "Bug",
+                    "priority": "Low",
+                    "has_priority": True,
+                    "component_present": True,
+                    "summary_length": -1,
+                    "summary_word_count": 5,
+                    "description_length": 200,
+                    "description_word_count": 30
                 }
             ]
         }

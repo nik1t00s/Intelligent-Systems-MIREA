@@ -5,48 +5,19 @@ import logging
 
 import joblib
 import pandas as pd
-from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
-from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from src.config import PROJECT_ROOT, get_settings, load_train_config
-from src.data_generation import save_dataset
+from src.data_generation import prepare_jira_delay_dataset
 from src.logging_utils import configure_logging
+from src.preprocessing import build_feature_preprocessor
 
 
 LOGGER = logging.getLogger(__name__)
-
-
-def build_preprocessor(config: dict) -> ColumnTransformer:
-    numeric_features = config["features"]["numeric"]
-    categorical_features = config["features"]["categorical"]
-    boolean_features = config["features"]["boolean"]
-
-    numeric_transformer = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="median")),
-            ("scaler", StandardScaler()),
-        ]
-    )
-    categorical_transformer = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="most_frequent")),
-            ("encoder", OneHotEncoder(handle_unknown="ignore")),
-        ]
-    )
-
-    return ColumnTransformer(
-        transformers=[
-            ("numeric", numeric_transformer, numeric_features),
-            ("categorical", categorical_transformer, categorical_features),
-            ("boolean", "passthrough", boolean_features),
-        ]
-    )
 
 
 def build_models(config: dict) -> dict[str, object]:
@@ -77,9 +48,14 @@ def main() -> None:
 
     data_config = config["data"]
     random_seed = config["project"]["random_seed"]
-    dataset_path = PROJECT_ROOT / data_config["raw_dataset_path"]
-    dataset_path = save_dataset(dataset_path, rows=data_config["rows"], random_seed=random_seed)
-    LOGGER.info("Synthetic dataset saved to %s", dataset_path)
+    raw_dataset_path = PROJECT_ROOT / data_config["raw_dataset_path"]
+    dataset_path = PROJECT_ROOT / data_config["prepared_dataset_path"]
+    dataset_path = prepare_jira_delay_dataset(
+        raw_dataset_path,
+        dataset_path,
+        delay_quantile=data_config["delay_quantile"],
+    )
+    LOGGER.info("Prepared Jira dataset saved to %s", dataset_path)
 
     dataframe = pd.read_csv(dataset_path)
     target_column = data_config["target_column"]
@@ -99,7 +75,7 @@ def main() -> None:
         stratify=y,
     )
 
-    preprocessor = build_preprocessor(config)
+    preprocessor = build_feature_preprocessor(config)
     model_candidates = build_models(config)
     leaderboard: dict[str, dict[str, float]] = {}
     trained_pipelines: dict[str, Pipeline] = {}
@@ -123,12 +99,26 @@ def main() -> None:
 
     artifacts_dir = PROJECT_ROOT / "artifacts"
     artifacts_dir.mkdir(parents=True, exist_ok=True)
+    settings.model_path.parent.mkdir(parents=True, exist_ok=True)
+    settings.model_metadata_path.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(best_model, settings.model_path)
+
+    canonical_models_dir = PROJECT_ROOT / "models"
+    canonical_models_dir.mkdir(parents=True, exist_ok=True)
+    canonical_model_path = canonical_models_dir / "model.joblib"
+    if canonical_model_path != settings.model_path:
+        joblib.dump(best_model, canonical_model_path)
+
+    artifact_model_path = artifacts_dir / "model.joblib"
+    if artifact_model_path != settings.model_path and artifact_model_path != canonical_model_path:
+        joblib.dump(best_model, artifact_model_path)
 
     metadata = {
         "project_name": config["project"]["name"],
+        "source_dataset_path": str(raw_dataset_path.relative_to(PROJECT_ROOT)),
         "dataset_path": str(dataset_path.relative_to(PROJECT_ROOT)),
         "rows": int(len(dataframe)),
+        "delay_threshold_days": float(dataframe["delay_threshold_days"].iloc[0]),
         "feature_columns": feature_columns,
         "id_column": id_column,
         "target_column": target_column,
@@ -139,6 +129,16 @@ def main() -> None:
     }
     with settings.model_metadata_path.open("w", encoding="utf-8") as file:
         json.dump(metadata, file, ensure_ascii=False, indent=2)
+
+    canonical_metadata_path = canonical_models_dir / "model_metadata.json"
+    if canonical_metadata_path != settings.model_metadata_path:
+        with canonical_metadata_path.open("w", encoding="utf-8") as file:
+            json.dump(metadata, file, ensure_ascii=False, indent=2)
+
+    artifact_metadata_path = artifacts_dir / "model_metadata.json"
+    if artifact_metadata_path != settings.model_metadata_path and artifact_metadata_path != canonical_metadata_path:
+        with artifact_metadata_path.open("w", encoding="utf-8") as file:
+            json.dump(metadata, file, ensure_ascii=False, indent=2)
 
     leaderboard_path = artifacts_dir / "leaderboard.json"
     with leaderboard_path.open("w", encoding="utf-8") as file:

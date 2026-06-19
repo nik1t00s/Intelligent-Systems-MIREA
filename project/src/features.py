@@ -4,11 +4,9 @@ from typing import Any
 
 import pandas as pd
 
+from src.preprocessing import normalize_prediction_frame
+
 
 def ensure_dataframe(records: list[dict[str, Any]]) -> pd.DataFrame:
     frame = pd.DataFrame(records)
-    boolean_columns = ["has_blockers", "is_customer_facing", "requires_review"]
-    for column in boolean_columns:
-        if column in frame.columns:
-            frame[column] = frame[column].astype(int)
-    return frame
+    return normalize_prediction_frame(frame)

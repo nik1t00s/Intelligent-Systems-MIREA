@@ -1,5 +1,5 @@
 services:
-  task-overdue-service:
+  jira-delay-risk-service:
     build: .
     ports:
       - "8000:8000"

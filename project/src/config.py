@@ -24,16 +24,17 @@ def _load_dotenv(dotenv_path: Path) -> None:
 class AppSettings:
     def __init__(self) -> None:
         _load_dotenv(PROJECT_ROOT / ".env")
-        self.app_name = os.getenv("APP_NAME", "task-overdue-service")
+        self.app_name = os.getenv("APP_NAME", "jira-delay-risk-service")
         self.app_env = os.getenv("APP_ENV", "development")
         self.app_host = os.getenv("APP_HOST", "0.0.0.0")
         self.app_port = int(os.getenv("APP_PORT", "8000"))
         self.log_level = os.getenv("LOG_LEVEL", "INFO")
-        self.model_path = Path(os.getenv("MODEL_PATH", str(PROJECT_ROOT / "artifacts" / "model.joblib")))
+        self.model_version = os.getenv("MODEL_VERSION", "v1")
+        self.model_path = Path(os.getenv("MODEL_PATH", str(PROJECT_ROOT / "models" / "model.joblib")))
         self.model_metadata_path = Path(
-            os.getenv("MODEL_METADATA_PATH", str(PROJECT_ROOT / "artifacts" / "model_metadata.json"))
+            os.getenv("MODEL_METADATA_PATH", str(PROJECT_ROOT / "models" / "model_metadata.json"))
         )
-        self.config_path = Path(os.getenv("CONFIG_PATH", str(PROJECT_ROOT / "configs" / "train_config.yaml")))
+        self.config_path = Path(os.getenv("CONFIG_PATH", str(PROJECT_ROOT / "configs" / "config.yaml")))
 
 
 @lru_cache(maxsize=1)

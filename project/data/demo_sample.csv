@@ -1,0 +1,6 @@
+﻿issue_key,issue_type,priority,has_priority,component_present,summary_length,summary_word_count,description_length,description_word_count,is_delayed
+SRCTREEWIN-14210,Bug,Low,1,1,59,9,269,52,0
+SRCTREEWIN-14167,Suggestion,Unknown,0,1,16,2,20401,2700,0
+SRCTREEWIN-14055,Bug,High,1,1,46,6,1869,90,0
+SRCTREEWIN-14044,Bug,High,1,1,1,1,4,1,0
+SRCTREEWIN-DEMO-001,Bug,Medium,1,0,88,11,1450,210,1
