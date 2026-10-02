@@ -113,25 +113,26 @@ def index() -> str:
             body {{
                 margin: 0;
                 font-family: "Segoe UI", Tahoma, sans-serif;
-                background: #f5f7fb;
-                color: #111827;
+                background: #101722;
+                color: #e7edf7;
             }}
             main {{
                 width: min(1040px, calc(100% - 32px));
                 margin: 0 auto;
-                padding: 28px 0;
+                padding: 40px 0;
             }}
             section {{
-                background: white;
-                border: 1px solid #dbe3ef;
-                border-radius: 16px;
+                background: #182536;
+                border: 1px solid #344b63;
+                border-radius: 22px;
                 padding: 22px;
                 margin-bottom: 18px;
                 box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
             }}
             h1 {{ margin: 0 0 10px; }}
-            p {{ color: #4b5563; line-height: 1.55; }}
+            p {{ color: #a7bbd1; line-height: 1.55; }}
             textarea, pre {{
+                background: #101b2a; color: #e7edf7;
                 width: 100%;
                 min-height: 260px;
                 box-sizing: border-box;
@@ -148,13 +149,13 @@ def index() -> str:
                 border: 0;
                 border-radius: 10px;
                 padding: 10px 14px;
-                background: #2563eb;
+                background: #65d6bb;
                 color: white;
                 text-decoration: none;
                 font-weight: 650;
                 cursor: pointer;
             }}
-            button.secondary, a.secondary {{ background: #e0e7ff; color: #1e40af; }}
+            button.secondary, a.secondary {{ background: #29445c; color: #e7edf7; }}
             @media (max-width: 820px) {{ .grid {{ grid-template-columns: 1fr; }} }}
         </style>
     </head>

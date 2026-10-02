@@ -96,3 +96,7 @@ template_pdf_extracted.txt
 project/notebooks/01_jira_eda_and_experiments.ipynb
 Шаблон отчета.docx
 Шаблон отчета.pdf
+
+# Generated caches
+*.pyc.*
+.ruff_cache/
